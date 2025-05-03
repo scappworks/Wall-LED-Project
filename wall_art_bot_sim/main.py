@@ -21,7 +21,6 @@ def draw_matrix(screen, matrix):
 def is_in_oval(x, y, center_x, center_y, radius_x, radius_y):
     return ((x - center_x) ** 2) / (radius_x ** 2) + ((y - center_y) ** 2) / (radius_y ** 2) < 0.95
 
-# Function to generate blinking eyes for 3 seconds
 def generate_blinking_eyes(start_time, blink_duration):
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
     eye_color = (255, 255, 255)
@@ -44,7 +43,7 @@ def generate_blinking_eyes(start_time, blink_duration):
                     matrix[y][x] = eye_color
     return matrix
 
-# Function to generate sleeping eyes (closing state)
+# Includes the animation for closing the eyes
 def generate_sleeping_eyes(start_time, closing_start_time):
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
     eye_color = (255, 255, 255)
@@ -56,7 +55,7 @@ def generate_sleeping_eyes(start_time, closing_start_time):
     eyes_closed = False
 
     # Start closing the eyes after blinking animation (adjust the start time as needed)
-    start_closing_time = 4  # After 3 seconds, start closing (once blink duration is done)
+    start_closing_time = 4  # After X seconds, start closing (needs to by synced with blink_duartion in Main() )
     if elapsed_time >= closing_start_time:
         eyelid_offset = min(int((elapsed_time - start_closing_time) * 10), 19)  # Lower slowly over time, max 19 pixels down
         if eyelid_offset >= 19:
@@ -86,7 +85,7 @@ def main():
     running = True
     screen, clock = init_pygame()
     start_time = pygame.time.get_ticks()
-    blink_duration = 4  # Blink for 3 seconds
+    blink_duration = 4  # Blink for X seconds
     closing_start_time = blink_duration
 
     while running:
@@ -94,11 +93,11 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        # Generate blinking eyes for 3 seconds
+        # Generate blinking eyes for blink_duration seconds
         if (pygame.time.get_ticks() - start_time) / 1000 < blink_duration:
             matrix = generate_blinking_eyes(start_time, blink_duration)
         else:
-            # After blinking duration, switch to sleeping eyes (closing animation)
+            # After blink_duration, switch to sleeping eyes (closing animation)
             matrix = generate_sleeping_eyes(start_time, closing_start_time)
 
         draw_matrix(screen, matrix)
