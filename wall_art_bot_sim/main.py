@@ -62,8 +62,8 @@ def generate_sleeping_eyes(start_time, closing_start_time):
             eyes_closed = True
 
     if eyes_closed:
-        eye_x_offset = -2
-        eye_y_offset = 2
+        eye_x_offset = -4
+        eye_y_offset = 8
 
     # Draw the eyes first
     for y in range(HEIGHT):
@@ -79,7 +79,34 @@ def generate_sleeping_eyes(start_time, closing_start_time):
                 is_in_oval(x, y, 42 + eye_x_offset, 24 + eye_y_offset, 6, 10):
                 matrix[y][x] = eyelid_color
 
+    if eyes_closed:
+        generate_zzz(matrix)
+
     return matrix
+
+def generate_zzz(matrix, start_x = 38, start_y = 8, color = (255, 255, 255)):
+    z_size = 5
+    spacing = 6
+
+    for i in range(3):
+        z_start_y = start_y + i * spacing
+        z_start_x = start_x + z_size * i
+
+        for j in range(z_size):
+            # Top line
+            if 0 <= z_start_y < HEIGHT and 0 <= z_start_x + j < WIDTH:
+                matrix[z_start_y][z_start_x + j] = color
+
+            # Diagonal line
+            if 0 <= z_start_y + j < HEIGHT and 0 <= z_start_x + (z_size - 1 - j) < WIDTH:
+                matrix[z_start_y + j][z_start_x + (z_size - 1 - j)] = color
+
+            # Bottom line
+            if 0 <= z_start_y + z_size - 1 < HEIGHT and 0 <= z_start_x + j < WIDTH:
+                matrix[z_start_y + z_size - 1][z_start_x + j] = color
+
+            
+
 
 def main():
     running = True
