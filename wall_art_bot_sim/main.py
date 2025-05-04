@@ -58,7 +58,7 @@ def generate_sleeping_eyes(start_time, closing_start_time):
     start_closing_time = 4  # After X seconds, start closing (needs to by synced with blink_duartion in Main() )
     if elapsed_time >= closing_start_time:
         eyelid_offset = min(int((elapsed_time - start_closing_time) * 10), 19)  # Lower slowly over time, max 19 pixels down
-        if eyelid_offset >= 19:
+        if eyelid_offset == 19:
             eyes_closed = True
 
     if eyes_closed:
@@ -80,13 +80,17 @@ def generate_sleeping_eyes(start_time, closing_start_time):
                 matrix[y][x] = eyelid_color
 
     if eyes_closed:
-        generate_zzz(matrix)
+        generate_zzz(matrix, elapsed_time)
 
     return matrix
 
-def generate_zzz(matrix, start_x = 38, start_y = 8, color = (255, 255, 255)):
+def generate_zzz(matrix, start_time, start_x = 38, start_y = 8, color = (255, 255, 255)):
     z_size = 5
     spacing = 6
+    full_z_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
+    delay = 4
+    elapsed_time = (pygame.time.get_ticks() - start_time) / 1000 - delay
+    lines_to_show = int(elapsed_time * 3)
 
     for i in range(3):
         z_start_y = start_y + i * spacing
@@ -95,17 +99,23 @@ def generate_zzz(matrix, start_x = 38, start_y = 8, color = (255, 255, 255)):
         for j in range(z_size):
             # Top line
             if 0 <= z_start_y < HEIGHT and 0 <= z_start_x + j < WIDTH:
-                matrix[z_start_y][z_start_x + j] = color
+                full_z_matrix[z_start_y][z_start_x + j] = color
 
             # Diagonal line
             if 0 <= z_start_y + j < HEIGHT and 0 <= z_start_x + (z_size - 1 - j) < WIDTH:
-                matrix[z_start_y + j][z_start_x + (z_size - 1 - j)] = color
+                full_z_matrix[z_start_y + j][z_start_x + (z_size - 1 - j)] = color
 
             # Bottom line
             if 0 <= z_start_y + z_size - 1 < HEIGHT and 0 <= z_start_x + j < WIDTH:
-                matrix[z_start_y + z_size - 1][z_start_x + j] = color
+                full_z_matrix[z_start_y + z_size - 1][z_start_x + j] = color
 
-            
+        for y in range(HEIGHT):
+            if y < lines_to_show:
+                for x in range(WIDTH):
+                    if full_z_matrix[y][x] != (0, 0, 0):
+                        matrix[y][x] = full_z_matrix[y][x]
+
+    return matrix
 
 
 def main():
