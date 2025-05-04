@@ -53,6 +53,7 @@ def generate_sleeping_eyes(start_time, closing_start_time):
     eye_x_offset = 0 
     eye_y_offset = 0
     eyes_closed = False
+    bounce_delay = 1
 
     # Start closing the eyes after blinking animation (adjust the start time as needed)
     start_closing_time = 4  # After X seconds, start closing (needs to by synced with blink_duartion in Main() )
@@ -64,6 +65,12 @@ def generate_sleeping_eyes(start_time, closing_start_time):
     if eyes_closed:
         eye_x_offset = -4
         eye_y_offset = 8
+        time_since_closed = max(0, elapsed_time - closing_start_time - bounce_delay)
+        print(time_since_closed)
+
+        if time_since_closed >= bounce_delay:
+            bounce_offset = int(elapsed_time) % 2
+            eye_y_offset += bounce_offset
 
     # Draw the eyes first
     for y in range(HEIGHT):
