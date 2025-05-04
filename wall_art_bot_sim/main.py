@@ -66,7 +66,6 @@ def generate_sleeping_eyes(start_time, closing_start_time):
         eye_x_offset = -4
         eye_y_offset = 8
         time_since_closed = max(0, elapsed_time - closing_start_time - bounce_delay)
-        print(time_since_closed)
 
         if time_since_closed >= bounce_delay:
             bounce_offset = int(elapsed_time) % 2
