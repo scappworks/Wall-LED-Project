@@ -90,6 +90,7 @@ def generate_sleeping_eyes(start_time, closing_start_time):
 
     return matrix
 
+# Generates sleeping zzz on top right
 def generate_zzz(matrix, start_time, start_x = 38, start_y = 8, color = (255, 255, 255)):
     z_size = 5
     spacing = 6
@@ -98,10 +99,12 @@ def generate_zzz(matrix, start_time, start_x = 38, start_y = 8, color = (255, 25
     elapsed_time = (pygame.time.get_ticks() - start_time) / 1000 - delay
     lines_to_show = int(elapsed_time * 3)
 
+    # This loop creates the entire matrix of Zs
     for i in range(3):
         z_start_y = start_y + i * spacing
         z_start_x = start_x + z_size * i
 
+        # This loop individually creates Zs
         for j in range(z_size):
             # Top line
             if 0 <= z_start_y < HEIGHT and 0 <= z_start_x + j < WIDTH:
@@ -115,6 +118,8 @@ def generate_zzz(matrix, start_time, start_x = 38, start_y = 8, color = (255, 25
             if 0 <= z_start_y + z_size - 1 < HEIGHT and 0 <= z_start_x + j < WIDTH:
                 full_z_matrix[z_start_y + z_size - 1][z_start_x + j] = color
 
+        # Turn out all of the LEDs in the Z matrix
+        # Also Contains logic for showing the Zs line by line
         for y in range(HEIGHT):
             if y < lines_to_show:
                 for x in range(WIDTH):
