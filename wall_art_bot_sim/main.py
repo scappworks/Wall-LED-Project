@@ -46,7 +46,7 @@ def generate_blinking_eyes(start_time):
 def generate_sleeping_eyes(start_time, zzz_start_time):
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
     open_eye_color = (255, 255, 255)
-    closed_eye_color = (0, 0, 0)  # Black eyelid
+    closed_eye_color = (0, 0, 0)
     elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
     eyelid_offset = 0
     eye_x_offset = 0 
@@ -116,8 +116,8 @@ def generate_zzz(matrix, start_time, start_x = 38, start_y = 8, color = (255, 25
             if 0 <= z_start_y + z_size - 1 < HEIGHT and 0 <= z_start_x + j < WIDTH:
                 full_z_matrix[z_start_y + z_size - 1][z_start_x + j] = color
 
-        # Turn out all of the LEDs in the Z matrix
-        # Also Contains logic for showing the Zs line by line
+        # Turn off all of the LEDs in the Z matrix.
+        # Also contains logic for showing the Zs line by line
         for y in range(HEIGHT):
             if y < lines_to_show:
                 for x in range(WIDTH):
@@ -144,11 +144,9 @@ def main():
                     start_time = pygame.time.get_ticks()
                     zzz_start_time = pygame.time.get_ticks()
 
-        # Generate blinking eyes for blink_duration seconds
         if not is_sleeping:
             matrix = generate_blinking_eyes(start_time)
         else:
-            # After blink_duration, switch to sleeping eyes (closing animation)
             matrix = generate_sleeping_eyes(start_time, zzz_start_time)
 
         draw_matrix(screen, matrix)
