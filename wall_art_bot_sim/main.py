@@ -21,26 +21,25 @@ def draw_matrix(screen, matrix):
 def is_in_oval(x, y, center_x, center_y, radius_x, radius_y):
     return ((x - center_x) ** 2) / (radius_x ** 2) + ((y - center_y) ** 2) / (radius_y ** 2) < 0.95
 
-def generate_blinking_eyes(start_time, blink_duration):
+def generate_blinking_eyes(start_time):
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
-    eye_color = (255, 255, 255)
+    open_eye_color = (255, 255, 255)
+    closed_eye_color = (0, 0, 0)
     elapsed_time = (pygame.time.get_ticks() - start_time) / 750
 
-    # Start with open eyes, blink, and return to open eyes
-    if elapsed_time < blink_duration:
-        # Create blinking effect: every 500 ms (half second) blink the eyes
-        if int(elapsed_time) % 2 == 0: 
-            # Oval-shaped open eyes
-            for y in range(HEIGHT):
-                for x in range(WIDTH):
-                    if is_in_oval(x, y, 22, 24, 6, 10) or is_in_oval(x, y, 42, 24, 6, 10):
-                        matrix[y][x] = eye_color
-    else:
-        # After 3 seconds, leave the eyes open
+    # Create blinking effect: every 500 ms (half second) blink the eyes
+    if int(elapsed_time) % 2 == 0:
+        # Oval-shaped open eyes
         for y in range(HEIGHT):
             for x in range(WIDTH):
                 if is_in_oval(x, y, 22, 24, 6, 10) or is_in_oval(x, y, 42, 24, 6, 10):
-                    matrix[y][x] = eye_color
+                    matrix[y][x] = closed_eye_color
+    else:
+        for y in range(HEIGHT):
+            for x in range(WIDTH):
+                if is_in_oval(x, y, 22, 24, 6, 10) or is_in_oval(x, y, 42, 24, 6, 10):
+                    matrix[y][x] = open_eye_color
+                    
     return matrix
 
 # Includes the animation for closing the eyes
@@ -136,19 +135,23 @@ def main():
     screen, clock = init_pygame()
     start_time = pygame.time.get_ticks()
     blink_duration = 4  # Blink for X seconds
-    closing_start_time = blink_duration
+    is_sleeping = False
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    is_sleeping = not is_sleeping
+                    state_start_time = pygame.time.get_ticks()
 
         # Generate blinking eyes for blink_duration seconds
-        if (pygame.time.get_ticks() - start_time) / 1000 < blink_duration:
-            matrix = generate_blinking_eyes(start_time, blink_duration)
+        if not is_sleeping:
+            matrix = generate_blinking_eyes(start_time)
         else:
             # After blink_duration, switch to sleeping eyes (closing animation)
-            matrix = generate_sleeping_eyes(start_time, closing_start_time)
+            matrix = generate_sleeping_eyes(start_time, 0)
 
         draw_matrix(screen, matrix)
         pygame.display.flip()
