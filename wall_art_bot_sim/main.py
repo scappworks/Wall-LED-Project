@@ -97,7 +97,9 @@ def generate_zzz(matrix, start_time, start_x = 38, start_y = 8, color = (255, 25
     full_z_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
     delay = 4
     elapsed_time = (pygame.time.get_ticks() - start_time) / 1000 - delay
-    lines_to_show = int(elapsed_time * 3)
+    cycle_duration = 9
+    loop_time = elapsed_time % cycle_duration
+    lines_to_show = int(loop_time * 3)
 
     # This loop creates the entire matrix of Zs
     for i in range(3):
