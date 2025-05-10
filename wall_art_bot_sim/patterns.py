@@ -31,11 +31,21 @@ def hsv_to_rgb(hue, saturation, value):
         return (t, p, v)
     elif hue_section == 5:
         return (v, p, q)
+    
+def set_pixel(matrix, x, y, color, intensity = 1.0):
+    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
+        r, g, b = color
+        matrix[y][x] = (
+            int (r * intensity),
+            int(g * intensity),
+            int(b * intensity)
+        )
 
 # --- Pattern Functions ---
 def gradient_wave_pattern():
     base_color = get_cool_color()
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
+
     for y in range(HEIGHT):
         for x in range(WIDTH):
             wave_factor = (math.sin((x + y) * 0.2) + 1) / 2
@@ -45,17 +55,37 @@ def gradient_wave_pattern():
 def checker_diamond_pattern():
     base_color = get_cool_color()
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
+
     for y in range(HEIGHT):
         for x in range(WIDTH):
             if ((x // 8 + y // 8) % 2) == 0:
                 matrix[y][x] = base_color
     return matrix
 
+def rug_pattern():
+    matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
+    stripe_width = 4
+    block_height = 4
+
+    for y in range(HEIGHT):
+        row_color = get_cool_color() if (y // block_height) % 2 == 0 else get_cool_color()
+
+        for x in range(WIDTH):
+            if ((x // stripe_width) % 2) == ((y // block_height) % 2):
+                matrix[y][x] = row_color
+            else:
+                matrix[y][x] = tuple(c // 4 for c in row_color)  # darker version
+
+    return matrix
+
+
+
 # --- Pattern Manager ---
 class PatternManager:
     def __init__(self):
-        self.pattern_funcs = [gradient_wave_pattern, checker_diamond_pattern]
+        self.pattern_funcs = [gradient_wave_pattern, checker_diamond_pattern, rug_pattern]
         self.current_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
+        self.last_pattern = None
         self.tick = 0
         self.phase = 'fade_in'
         self.base_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
@@ -63,7 +93,10 @@ class PatternManager:
         self.next_pattern()
 
     def next_pattern(self):
-        self.base_matrix = random.choice(self.pattern_funcs)()
+        available_func = [f for f in self.pattern_funcs if f!= self.last_pattern]
+        chosen_func = random.choice(available_func)
+        self.base_matrix = chosen_func()
+        self.last_pattern = chosen_func
         self.phase = 'fade_in'
         self.phase_start_tick = self.tick
 
@@ -80,7 +113,7 @@ class PatternManager:
                 self.phase_start_tick = self.tick
 
         elif self.phase == 'hold':
-            if ticks_in_phase >= 100:  # ~5 seconds at 20 FPS
+            if ticks_in_phase >= 50:  # ~5 seconds at 20 FPS
                 self.phase = 'fade_out'
                 self.phase_start_tick = self.tick
             self.current_matrix = self.base_matrix
