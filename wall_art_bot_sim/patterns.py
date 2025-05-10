@@ -78,12 +78,46 @@ def rug_pattern():
 
     return matrix
 
+def walker_pattern():
+    ground_color = get_cool_color()
+    sky_color = get_cool_color()
+    matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
+    third_height = HEIGHT // 3
 
+    for y in range(HEIGHT):
+        if y < third_height:
+            color = sky_color
+            cloud_centers = [
+                (WIDTH // 2, HEIGHT // 5),
+                (WIDTH // 2 - 4, HEIGHT // 5 + 1),
+                (WIDTH // 2 + 4, HEIGHT // 5 + 1),
+                (WIDTH // 2 - 2, HEIGHT // 5 - 1),
+                (WIDTH // 2 + 2, HEIGHT // 5 - 1)
+            ]
+
+            radius = 4
+
+            for x in range(WIDTH):
+                for cx, cy in cloud_centers:
+                    dist = math.hypot(x-cx, y-cy)
+                    if dist < radius:
+                        matrix[y][x] = color
+        elif y < 2 * third_height:
+            color = (0, 0, 0)
+        else:
+            color = ground_color
+
+        if y >= third_height:
+            for x in range(WIDTH):
+                matrix[y][x] = color
+
+    return matrix
 
 # --- Pattern Manager ---
 class PatternManager:
     def __init__(self):
-        self.pattern_funcs = [gradient_wave_pattern, checker_diamond_pattern, rug_pattern]
+        self.pattern_funcs = [gradient_wave_pattern, checker_diamond_pattern, rug_pattern, \
+                              walker_pattern]
         self.current_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
         self.last_pattern = None
         self.tick = 0
