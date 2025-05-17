@@ -1,69 +1,75 @@
-import pygame
+import time
+import board
+import busio
+import adafruit_veml7700
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from animations import EyeAnimations
 from patterns import PatternManager
 
 WIDTH, HEIGHT = 64, 64
-SCALE = 8
 FPS = 30
+LIGHT_THRESHOLD = 30  # Adjust this after testing in your room
 
-# Initialize Pygame
-def init_pygame():
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH * SCALE, HEIGHT * SCALE))
-    pygame.display.set_caption("Wall Art Bot Simulator")
-    clock = pygame.time.Clock()
-    return screen, clock
+# Initialize light sensor
+i2c = busio.I2C(board.SCL, board.SDA)
+sensor = adafruit_veml7700.VEML7700(i2c)
 
-def draw_matrix(screen, matrix):
+# Setup LED matrix
+options = RGBMatrixOptions()
+options.rows = 64
+options.cols = 64
+options.chain_length = 1
+options.parallel = 1
+options.hardware_mapping = 'adafruit-hat'  # or 'regular' depending on your Pi hat
+matrix = RGBMatrix(options=options)
+
+# Draw a frame to the LED matrix
+def draw_matrix(matrix_data):
     for y in range(HEIGHT):
         for x in range(WIDTH):
-            color = matrix[y][x]
-            pygame.draw.rect(screen, color, (x*SCALE, y*SCALE, SCALE, SCALE))
+            r, g, b = matrix_data[y][x]
+            matrix.SetPixel(x, y, r, g, b)
 
 def main():
-    running = True
-    screen, clock = init_pygame()
-    start_time = pygame.time.get_ticks()
-    zzz_start_time = pygame.time.get_ticks()
-    is_sleeping = False
-    is_pattern = False
     eye_animations = EyeAnimations()
     pattern_manager = PatternManager()
 
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                        is_pattern = not is_pattern
+    current_mode = "blink"  # Modes: "blink", "sleep", "pattern"
+    last_light_state = None
+    transition_time = time.time()
+    blink_start_time = time.time()
 
-                if event.key == pygame.K_SPACE:
-                    if not is_pattern:
-                        is_sleeping = not is_sleeping
-                        start_time = pygame.time.get_ticks()
-                        zzz_start_time = pygame.time.get_ticks()
-                    else:
-                        is_pattern = not is_pattern
-                        is_sleeping = False
-                        start_time = pygame.time.get_ticks()
-                        zzz_start_time = pygame.time.get_ticks()                   
+    try:
+        while True:
+            current_time = time.time()
+            lux = sensor.lux
 
-                    
-        if not is_pattern:
-            if not is_sleeping:
-                matrix = eye_animations.generate_blinking_eyes(start_time)
+            # Initial blinking period
+            if current_mode == "blink" and current_time - blink_start_time < 2:
+                matrix_data = eye_animations.generate_blinking_eyes(blink_start_time)
             else:
-                matrix = eye_animations.generate_sleeping_eyes(start_time, zzz_start_time)
-        else:
-            frame = pattern_manager.update()
-            matrix = frame
+                # Decide based on light sensor
+                if lux < LIGHT_THRESHOLD:
+                    if last_light_state != "dark":
+                        transition_time = current_time
+                        last_light_state = "dark"
+                        current_mode = "sleep"
+                    matrix_data = eye_animations.generate_sleeping_eyes(current_time, transition_time)
+                else:
+                    if last_light_state != "light":
+                        transition_time = current_time
+                        last_light_state = "light"
+                        current_mode = "pattern"
+                    if current_mode == "pattern":
+                        matrix_data = pattern_manager.update()
+                    else:
+                        matrix_data = eye_animations.generate_blinking_eyes(blink_start_time)
 
-        draw_matrix(screen, matrix)
-        pygame.display.flip()
-        clock.tick(FPS)
+            draw_matrix(matrix_data)
+            time.sleep(1.0 / FPS)
 
-    pygame.quit()
+    except KeyboardInterrupt:
+        matrix.Clear()
 
 if __name__ == "__main__":
     main()
