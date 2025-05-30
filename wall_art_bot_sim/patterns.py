@@ -32,13 +32,16 @@ def hsv_to_rgb(hue, saturation, value):
     elif hue_section == 5:
         return (v, p, q)
     
+def clamp_color(color):
+    return max(0, min(255, int(color)))
+
 def set_pixel(matrix, x, y, color, intensity = 1.0):
     if 0 <= x < WIDTH and 0 <= y < HEIGHT:
         r, g, b = color
         matrix[y][x] = (
-            int (r * intensity),
-            int(g * intensity),
-            int(b * intensity)
+            clamp_color(r * intensity),
+            clamp_color(g * intensity),
+            clamp_color(b * intensity)
         )
 
 # --- Pattern Functions ---
@@ -169,6 +172,6 @@ class PatternManager:
 
     def apply_fade(self, factor):
         return [
-            [tuple(int(channel * factor) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
+            [tuple(clamp_color(channel * factor) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
             for y in range(HEIGHT)
         ]
