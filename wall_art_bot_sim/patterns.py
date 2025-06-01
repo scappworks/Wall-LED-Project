@@ -52,8 +52,12 @@ def gradient_wave_pattern():
     for y in range(HEIGHT):
         for x in range(WIDTH):
             wave_factor = (math.sin((x + y) * 0.2) + 1) / 2
-            matrix[y][x] = tuple(int(channel * wave_factor) for channel in base_color)
+            matrix[y][x] = tuple(
+                max(0, min(255, int(round(channel * wave_factor))))
+                for channel in base_color
+            )
     return matrix
+
 
 def checker_diamond_pattern():
     base_color = get_cool_color()
@@ -144,6 +148,7 @@ class PatternManager:
         if self.phase == 'fade_in':
             fade_duration = 30  # 1.5 seconds at 20 FPS
             factor = min(ticks_in_phase / fade_duration, 1.0)
+            min_val = 10
             self.current_matrix = self.apply_fade(factor)
             if ticks_in_phase >= fade_duration:
                 self.phase = 'hold'
@@ -171,7 +176,10 @@ class PatternManager:
         return self.current_matrix
 
     def apply_fade(self, factor):
+        def clamp(val):
+            return max(0, min(255, int(round(val))))
+        
         return [
-            [tuple(clamp_color(channel * factor) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
+            [tuple(clamp(channel * factor) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
             for y in range(HEIGHT)
         ]
