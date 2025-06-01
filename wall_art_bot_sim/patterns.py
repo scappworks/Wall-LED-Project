@@ -1,6 +1,7 @@
 import random
 import math
 
+
 WIDTH, HEIGHT = 64, 64
 
 # --- Color Helpers ---
@@ -52,12 +53,8 @@ def gradient_wave_pattern():
     for y in range(HEIGHT):
         for x in range(WIDTH):
             wave_factor = (math.sin((x + y) * 0.2) + 1) / 2
-            matrix[y][x] = tuple(
-                max(0, min(255, int(round(channel * wave_factor))))
-                for channel in base_color
-            )
+            matrix[y][x] = tuple(int(channel * wave_factor) for channel in base_color)
     return matrix
-
 
 def checker_diamond_pattern():
     base_color = get_cool_color()
@@ -73,9 +70,11 @@ def rug_pattern():
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
     stripe_width = 4
     block_height = 4
+    color1 = get_cool_color()
+    color2 = get_cool_color()
 
     for y in range(HEIGHT):
-        row_color = get_cool_color() if (y // block_height) % 2 == 0 else get_cool_color()
+        row_color = color1 if (y // block_height) % 2 == 0 else color2
 
         for x in range(WIDTH):
             if ((x // stripe_width) % 2) == ((y // block_height) % 2):
@@ -148,7 +147,6 @@ class PatternManager:
         if self.phase == 'fade_in':
             fade_duration = 30  # 1.5 seconds at 20 FPS
             factor = min(ticks_in_phase / fade_duration, 1.0)
-            min_val = 10
             self.current_matrix = self.apply_fade(factor)
             if ticks_in_phase >= fade_duration:
                 self.phase = 'hold'
@@ -176,10 +174,7 @@ class PatternManager:
         return self.current_matrix
 
     def apply_fade(self, factor):
-        def clamp(val):
-            return max(0, min(255, int(round(val))))
-        
         return [
-            [tuple(clamp(channel * factor) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
+            [tuple(clamp_color(channel * factor) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
             for y in range(HEIGHT)
         ]
