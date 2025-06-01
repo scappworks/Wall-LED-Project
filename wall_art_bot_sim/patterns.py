@@ -173,8 +173,10 @@ class PatternManager:
 
         return self.current_matrix
 
-    def apply_fade(self, factor):
+    def apply_fade(self, factor, gamma = 2.2):
+        corrected = pow(factor, gamma)
+
         return [
-            [tuple(clamp_color(channel * factor) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
+            [tuple(clamp_color(channel * corrected) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
             for y in range(HEIGHT)
         ]
