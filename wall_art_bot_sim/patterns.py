@@ -1,65 +1,38 @@
 import random
 import math
 
-
 WIDTH, HEIGHT = 64, 64
 
-# --- Color Helpers ---
 def get_cool_color():
-    hue = random.randint(160, 260)  # Cool color range: blue, teal, violet
-    saturation = 1.0
-    value = 1.0
-    return hsv_to_rgb(hue / 360.0, saturation, value)
+    hue = random.randint(160, 260)
+    return hsv_to_rgb(hue / 360.0, 1.0, 1.0)
 
 def hsv_to_rgb(hue, saturation, value):
-    hue_section = int(hue * 6)
-    fractional = (hue * 6) - hue_section
+    h = int(hue * 6)
+    f = (hue * 6) - h
     p = int(255 * value * (1 - saturation))
-    q = int(255 * value * (1 - fractional * saturation))
-    t = int(255 * value * (1 - (1 - fractional) * saturation))
+    q = int(255 * value * (1 - f * saturation))
+    t = int(255 * value * (1 - (1 - f) * saturation))
     v = int(255 * value)
+    h %= 6
+    return [(v, t, p), (q, v, p), (p, v, t), (p, q, v), (t, p, v), (v, p, q)][h]
 
-    hue_section = hue_section % 6
-    if hue_section == 0:
-        return (v, t, p)
-    elif hue_section == 1:
-        return (q, v, p)
-    elif hue_section == 2:
-        return (p, v, t)
-    elif hue_section == 3:
-        return (p, q, v)
-    elif hue_section == 4:
-        return (t, p, v)
-    elif hue_section == 5:
-        return (v, p, q)
-    
-def clamp_color(color):
-    return max(0, min(255, int(color)))
-
-def set_pixel(matrix, x, y, color, intensity = 1.0):
-    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-        r, g, b = color
-        matrix[y][x] = (
-            clamp_color(r * intensity),
-            clamp_color(g * intensity),
-            clamp_color(b * intensity)
-        )
+def clamp_color(value):
+    return max(0, min(255, int(round(value))))
 
 # --- Pattern Functions ---
 def gradient_wave_pattern():
     base_color = get_cool_color()
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
-
     for y in range(HEIGHT):
         for x in range(WIDTH):
             wave_factor = (math.sin((x + y) * 0.2) + 1) / 2
-            matrix[y][x] = tuple(int(channel * wave_factor) for channel in base_color)
+            matrix[y][x] = tuple(clamp_color(channel * wave_factor) for channel in base_color)
     return matrix
 
 def checker_diamond_pattern():
     base_color = get_cool_color()
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
-
     for y in range(HEIGHT):
         for x in range(WIDTH):
             if ((x // 8 + y // 8) % 2) == 0:
@@ -67,73 +40,55 @@ def checker_diamond_pattern():
     return matrix
 
 def rug_pattern():
-    matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
-    stripe_width = 4
-    block_height = 4
     color1 = get_cool_color()
     color2 = get_cool_color()
-
+    matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
     for y in range(HEIGHT):
-        row_color = color1 if (y // block_height) % 2 == 0 else color2
-
+        row_color = color1 if (y // 4) % 2 == 0 else color2
         for x in range(WIDTH):
-            if ((x // stripe_width) % 2) == ((y // block_height) % 2):
+            if ((x // 4) % 2) == ((y // 4) % 2):
                 matrix[y][x] = row_color
             else:
-                matrix[y][x] = tuple(c // 4 for c in row_color)  # darker version
-
+                matrix[y][x] = tuple(c // 4 for c in row_color)
     return matrix
 
 def walker_pattern():
-    ground_color = get_cool_color()
-    sky_color = get_cool_color()
+    ground = get_cool_color()
+    sky = get_cool_color()
     matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
-    third_height = HEIGHT // 3
+    th = HEIGHT // 3
+
+    cloud_centers = [(WIDTH//2, HEIGHT//5), (WIDTH//2-4, HEIGHT//5+1),
+                     (WIDTH//2+4, HEIGHT//5+1), (WIDTH//2-2, HEIGHT//5-1),
+                     (WIDTH//2+2, HEIGHT//5-1)]
+    radius = 4
 
     for y in range(HEIGHT):
-        if y < third_height:
-            color = sky_color
-            cloud_centers = [
-                (WIDTH // 2, HEIGHT // 5),
-                (WIDTH // 2 - 4, HEIGHT // 5 + 1),
-                (WIDTH // 2 + 4, HEIGHT // 5 + 1),
-                (WIDTH // 2 - 2, HEIGHT // 5 - 1),
-                (WIDTH // 2 + 2, HEIGHT // 5 - 1)
-            ]
-
-            radius = 4
-
-            for x in range(WIDTH):
+        for x in range(WIDTH):
+            if y < th:
                 for cx, cy in cloud_centers:
-                    dist = math.hypot(x-cx, y-cy)
-                    if dist < radius:
-                        matrix[y][x] = color
-        elif y < 2 * third_height:
-            color = (0, 0, 0)
-        else:
-            color = ground_color
-
-        if y >= third_height:
-            for x in range(WIDTH):
-                matrix[y][x] = color
-
+                    if math.hypot(x - cx, y - cy) < radius:
+                        matrix[y][x] = sky
+            elif y >= 2 * th:
+                matrix[y][x] = ground
     return matrix
 
 # --- Pattern Manager ---
 class PatternManager:
     def __init__(self):
-        self.pattern_funcs = [gradient_wave_pattern, checker_diamond_pattern, rug_pattern, \
-                              walker_pattern]
+        self.pattern_funcs = [gradient_wave_pattern, checker_diamond_pattern, rug_pattern, walker_pattern]
         self.current_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
         self.last_pattern = None
         self.tick = 0
         self.phase = 'fade_in'
         self.base_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
         self.phase_start_tick = 0
+        self.fade_cache = {}
         self.next_pattern()
 
     def next_pattern(self):
-        available_func = [f for f in self.pattern_funcs if f!= self.last_pattern]
+        self.fade_cache = {}
+        available_func = [f for f in self.pattern_funcs if f != self.last_pattern]
         chosen_func = random.choice(available_func)
         self.base_matrix = chosen_func()
         self.last_pattern = chosen_func
@@ -145,38 +100,38 @@ class PatternManager:
         ticks_in_phase = self.tick - self.phase_start_tick
 
         if self.phase == 'fade_in':
-            fade_duration = 30  # 1.5 seconds at 20 FPS
-            factor = min(ticks_in_phase / fade_duration, 1.0)
+            duration = 30
+            factor = min(ticks_in_phase / duration, 1.0)
             self.current_matrix = self.apply_fade(factor)
-            if ticks_in_phase >= fade_duration:
+            if ticks_in_phase >= duration:
                 self.phase = 'hold'
                 self.phase_start_tick = self.tick
 
         elif self.phase == 'hold':
-            if ticks_in_phase >= 50:  # ~5 seconds at 20 FPS
+            if ticks_in_phase >= 50:
                 self.phase = 'fade_out'
                 self.phase_start_tick = self.tick
             self.current_matrix = self.base_matrix
 
         elif self.phase == 'fade_out':
-            fade_duration = 20  # ~1 second at 20 FPS
-            factor = max(1.0 - (ticks_in_phase / fade_duration), 0.0)
+            duration = 20
+            factor = max(1.0 - (ticks_in_phase / duration), 0.0)
             self.current_matrix = self.apply_fade(factor)
-            if ticks_in_phase >= fade_duration:
+            if ticks_in_phase >= duration:
                 self.phase = 'black'
                 self.phase_start_tick = self.tick
 
         elif self.phase == 'black':
-            if ticks_in_phase >= 20:  # 1 second at 20 FPS
+            if ticks_in_phase >= 20:
                 self.next_pattern()
             self.current_matrix = [[(0, 0, 0) for _ in range(WIDTH)] for _ in range(HEIGHT)]
 
         return self.current_matrix
 
-    def apply_fade(self, factor, gamma = 2.2):
+    def apply_fade(self, factor, gamma=2.2):
         corrected = pow(factor, gamma)
-
         return [
-            [tuple(clamp_color(channel * corrected) for channel in self.base_matrix[y][x]) for x in range(WIDTH)]
+            [tuple(clamp_color(channel * corrected) for channel in self.base_matrix[y][x])
+             for x in range(WIDTH)]
             for y in range(HEIGHT)
         ]

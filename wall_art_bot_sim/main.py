@@ -66,6 +66,7 @@ def main():
                         matrix_data = eye_animations.generate_blinking_eyes(blink_start_time)
 
             draw_matrix(matrix_data)
+            offscreen_canvas = matrix.SwapOnVSync(offscreen_canvas)
             time.sleep(1.0 / FPS)
 
     except KeyboardInterrupt:
