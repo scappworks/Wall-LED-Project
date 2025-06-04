@@ -22,6 +22,7 @@ options.chain_length = 1
 options.parallel = 1
 options.hardware_mapping = 'adafruit-hat'  # or 'regular' depending on your Pi hat
 matrix = RGBMatrix(options=options)
+offscreen_canvas = matrix.CreateFromCanvas()
 
 # Draw a frame to the LED matrix
 def draw_matrix(matrix_data):
