@@ -100,7 +100,7 @@ class PatternManager:
         ticks_in_phase = self.tick - self.phase_start_tick
 
         if self.phase == 'fade_in':
-            duration = 30
+            duration = 50
             factor = min(ticks_in_phase / duration, 1.0)
             self.current_matrix = self.apply_fade(factor)
             if ticks_in_phase >= duration:
@@ -114,7 +114,7 @@ class PatternManager:
             self.current_matrix = self.base_matrix
 
         elif self.phase == 'fade_out':
-            duration = 20
+            duration = 50
             factor = max(1.0 - (ticks_in_phase / duration), 0.0)
             self.current_matrix = self.apply_fade(factor)
             if ticks_in_phase >= duration:
