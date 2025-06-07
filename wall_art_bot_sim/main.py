@@ -31,6 +31,24 @@ def draw_matrix(matrix_data):
             r, g, b = matrix_data[y][x]
             matrix.SetPixel(x, y, r, g, b)
 
+def get_matrix_data(current_mode, last_light_state, current_time, blink_start_time, transition_time, lux, 
+                    eye_animations, pattern_manager):
+    if current_mode == "blink" and current_time - blink_start_time < 2:
+        matrix_data = eye_animations.generate_blinking_eyes(blink_start_time)
+    elif lux < LIGHT_THRESHOLD:
+        if last_light_state != "dark":
+            transition_time = current_time
+            last_light_state = "dark"
+            current_mode = "sleep"
+        matrix_data = eye_animations.generate_sleeping_eyes(current_time, transition_time)
+    else:
+        if last_light_state != "light":
+            transition_time = current_time
+            last_light_state = "light"
+            current_mode = "pattern"
+        matrix_data = pattern_manager.update()
+    return matrix_data, current_mode, last_light_state, transition_time
+
 def main():
     eye_animations = EyeAnimations()
     pattern_manager = PatternManager()
@@ -46,26 +64,10 @@ def main():
             current_time = time.time()
             lux = sensor.lux
 
-            # Initial blinking period
-            if current_mode == "blink" and current_time - blink_start_time < 2:
-                matrix_data = eye_animations.generate_blinking_eyes(blink_start_time)
-            else:
-                # Decide based on light sensor
-                if lux < LIGHT_THRESHOLD:
-                    if last_light_state != "dark":
-                        transition_time = current_time
-                        last_light_state = "dark"
-                        current_mode = "sleep"
-                    matrix_data = eye_animations.generate_sleeping_eyes(current_time, transition_time)
-                else:
-                    if last_light_state != "light":
-                        transition_time = current_time
-                        last_light_state = "light"
-                        current_mode = "pattern"
-                    if current_mode == "pattern":
-                        matrix_data = pattern_manager.update()
-                    else:
-                        matrix_data = eye_animations.generate_blinking_eyes(blink_start_time)
+            matrix_data, current_mode, last_light_state, transition_time = get_matrix_data(
+                current_mode, last_light_state, current_time, blink_start_time, transition_time, lux,
+                eye_animations, pattern_manager
+            )
 
             draw_matrix(matrix_data)
             offscreen_canvas = matrix.SwapOnVSync(offscreen_canvas)
