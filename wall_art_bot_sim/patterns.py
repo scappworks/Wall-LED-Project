@@ -128,7 +128,7 @@ class PatternManager:
 
         return self.current_matrix
 
-    def apply_fade(self, factor, gamma=2.2):
+    def apply_fade(self, factor, gamma=3.0):
         cache_key = round(factor, 3)
         if cache_key in self.fade_cache:
             return self.fade_cache[cache_key]
